@@ -7,7 +7,8 @@ use clap::{Arg, App};
 
 extern crate csv;
 
-const FORMAT_CPP : &str = "cpp";
+const FORMAT_CPP_ST : &str = "cpp_st";
+const FORMAT_CPP_MAP : &str = "cpp_map";
 
 struct ZoneArea<'a>(&'a str);
 
@@ -44,6 +45,11 @@ impl ZoneInfo {
     fn to_cpp_structure_literal(&self) -> String {
         "{".to_string() + "\"" + &self.name + "\"" + "," + "\"" + &self.abbreviation + "\"" + "," + &self.utc_off.to_string() + "}"
     }
+
+    fn to_cpp_map_literal(&self) -> String {
+        "{".to_string() + "\"" + &self.name + "\"" + "," + "{" + "\"" + &self.abbreviation + "\"" + "," + &self.utc_off.to_string() + "}" + "}"
+    }
+
 }
 
 // convert string offset to seconds
@@ -79,7 +85,7 @@ fn main() {
                                 .takes_value(true))
                             .arg(Arg::with_name("format")
                                 .help("The output format.")
-                                .possible_values(&["cpp"])
+                                .possible_values(&["cpp_st", "cpp_map"])
                                 .takes_value(true)
                                 .default_value("cpp"))
                             .get_matches();
@@ -120,7 +126,13 @@ fn main() {
             // ignore others
             zones_info.push(zone_info)
         }
-        if output_format == FORMAT_CPP {
+        if output_format == FORMAT_CPP_MAP {
+            println!("{{");
+            for zone_info in zones_info {
+                println!("{},", zone_info.to_cpp_map_literal());
+            }
+            println!("}}");
+        } else if output_format == FORMAT_CPP_ST {
             println!("{{");
             for zone_info in zones_info {
                 println!("{},", zone_info.to_cpp_structure_literal());
